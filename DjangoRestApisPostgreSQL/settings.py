@@ -37,9 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Django REST framework 
+    # Django REST framework
     'rest_framework',
-    # Tutorials application 
+    # Tutorials application
     'tutorials.apps.TutorialsConfig',
     # CORS
     'corsheaders',
@@ -91,7 +91,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'tutorial',
-        'USER': config('POSTGRE_USERNAME'),
+        'USER': config('POSTGRES_USERNAME'),
         'PASSWORD': config('POSTGRES_PASSWORD'),
         'HOST': '127.0.0.1',
         'PORT': '5432',
