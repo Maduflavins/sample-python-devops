@@ -1,59 +1,59 @@
-workflows:
-  version: 2
-  build-deploy:
-    jobs:
-      - build
-      - deploy:
-          requires:
-            - build
-          filters:
-            branches:
-              only: master
-
-version: 2
-jobs:
-  build:
-    docker:
-      - image: circleci/python:3.6.2-stretch-browsers
-        environment:
-          TEST_DATABASE_URL: postgresql://ubuntu@localhost/circle_test?sslmode=disable
-      - image: circleci/postgres:9.6.5-alpine-ram
-        environment:
-          POSTGRES_USER: root
-          POSTGRES_DB: circle_test
-          POSTGRES_PASSWORD: ""
-    steps:
-      - checkout
-      - restore_cache:
-          key: deps1-{{ .Branch }}-{{ checksum "requirements/dev.txt" }}
-      - run:
-          name: Install Python deps in a venv
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install -r requirements/dev.txt
-      - save_cache:
-          key: deps1-{{ .Branch }}-{{ checksum "requirements/dev.txt" }}
-          paths:
-            - "venv"
-      - run:
-          command: |
-            . venv/bin/activate
-            python manage.py test
-      - store_artifacts:
-          path: test-reports/
-          destination: tr1
-      - store_test_results:
-          path: test-reports/
-  deploy:
-    steps:
-      - checkout
-      - run:
-          name: Deploy Master to Heroku
-          command: |
-            git push https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_APP_NAME.git master
-
-
+#workflows:
+#  version: 2
+#  build-deploy:
+#    jobs:
+#      - build
+#      - deploy:
+#          requires:
+#            - build
+#          filters:
+#            branches:
+#              only: master
+#
+#version: 2
+#jobs:
+#  build:
+#    docker:
+#      - image: circleci/python:3.6.2-stretch-browsers
+#        environment:
+#          TEST_DATABASE_URL: postgresql://ubuntu@localhost/circle_test?sslmode=disable
+#      - image: circleci/postgres:9.6.5-alpine-ram
+#        environment:
+#          POSTGRES_USER: root
+#          POSTGRES_DB: circle_test
+#          POSTGRES_PASSWORD: ""
+#    steps:
+#      - checkout
+#      - restore_cache:
+#          key: deps1-{{ .Branch }}-{{ checksum "requirements/dev.txt" }}
+#      - run:
+#          name: Install Python deps in a venv
+#          command: |
+#            python3 -m venv venv
+#            . venv/bin/activate
+#            pip install -r requirements/dev.txt
+#      - save_cache:
+#          key: deps1-{{ .Branch }}-{{ checksum "requirements/dev.txt" }}
+#          paths:
+#            - "venv"
+#      - run:
+#          command: |
+#            . venv/bin/activate
+#            python manage.py test
+#      - store_artifacts:
+#          path: test-reports/
+#          destination: tr1
+#      - store_test_results:
+#          path: test-reports/
+#  deploy:
+#    steps:
+#      - checkout
+#      - run:
+#          name: Deploy Master to Heroku
+#          command: |
+#            git push https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_APP_NAME.git master
+#
+#
 
 
 
@@ -119,3 +119,48 @@ jobs:
 #          git push https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_APP_NAME.git master
 #
 #
+
+
+version: 2.1
+
+orbs:
+  heroku: circleci/heroku@1.2.2
+workflows:
+  heroku_deploy:
+    jobs:
+      - build
+      - heroku/deploy-via-git: # Use the pre-configured job, deploy-via-git
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.6.4
+      - image: circleci/postgres:9.4.12-alpine
+    working_directory: ~/DjangoRestApisPostgresSQL
+    steps:
+      - checkout # check out source code to working directory
+      - run: sudo chown -R circleci:circleci /usr/local/bin
+      - run: sudo chown -R circleci:circleci /usr/local/lib/python3.6/site-packages
+      - restore_cache:
+      # Read about caching dependencies: https://circleci.com/docs/2.0/caching/
+          key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+      - run:
+          command: |
+            sudo pip install pipenv
+            pipenv install
+      - save_cache: # cache Python dependencies using checksum of Pipfile as the cache-key
+          key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+          paths:
+            - "venv"
+      - run:
+          command: |
+            pipenv run python manage.py test
+      - store_test_results: # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
+          path: test-results
+      - store_artifacts: # Upload test summary for display in Artifacts: https://circleci.com/docs/2.0/artifacts/
+          path: test-results
+          destination: tr1
