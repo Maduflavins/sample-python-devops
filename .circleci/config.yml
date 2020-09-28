@@ -19,11 +19,21 @@
 #  main:
 #    jobs:
 #      - build-and-test
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
 
-version: 2.1
-
+version: 2
 orbs:
-  python: circleci/python@0.2.1
+  python: circleci/python@0.2
 jobs: # A basic unit of work in a run
   build: # runs not using Workflows must have a `build` job as entry point
     # directory where steps are run
