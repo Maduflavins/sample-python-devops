@@ -20,7 +20,7 @@
 #    jobs:
 #      - build-and-test
 workflows:
-  version: 2
+  version: 2.1
   build-deploy:
     jobs:
       - build
@@ -31,7 +31,7 @@ workflows:
             branches:
               only: master
 
-version: 2
+version: 2.1
 jobs: # A basic unit of work in a run
   build: # runs not using Workflows must have a `build` job as entry point
     # directory where steps are run
